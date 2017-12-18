@@ -27,5 +27,5 @@ app.listen(port,function (err) {
     console.log("server is listening on " + port);
 });
 
-app.post('/story',story);
-app.post('/teaser',teaser);
+app.use('/story',story);
+app.use('/teaser',teaser);
