@@ -20,11 +20,7 @@ function getInsights(req, res) {
     try {
         var user=req.body;
         var insights=[];
-        var sum=0;
-        user.activity.forEach(function(activity){
-            if(activity.date=="01/01/2017")
-                sum+=activity.ammount;
-        })
+       
         insights.push( {
             "id":"16052c32-574b-4a15-882e-0286e4d64fe0",
             "generatedDate":"04/20/2017 12:52 AM",
