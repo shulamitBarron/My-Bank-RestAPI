@@ -1,5 +1,7 @@
 var errors = require("../modules/errors");
 
+var monthNames = require("../modules/month").monthNames;
+
 function getInsightDetails(req, res) {
     try {
         res.send("getInsightDetails");
@@ -20,84 +22,91 @@ function getInsights(req, res) {
     try {
         var user=req.body;
         var insights=[];
-       
-        insights.push( {
-            "id":"16052c32-574b-4a15-882e-0286e4d64fe0",
-            "generatedDate":"04/20/2017 12:52 AM",
-            "useCaseId":"NotifyGovernmentDeposit_UC1",
-            "insightId":"NotifyGovernmentDeposit",
-            "presentedDate":"04/20/2017 12:52 AM",
+        var transactions=user.transactions;
+        var sortByMonth = transformArr(transactions);
+        var curDate=new Date();
+        var lastMonthDate=monthNames[new Date(Math.max.apply(null, transactions.map(function(a){ return new Date(a.date);}))).getMonth()];
+        var insight={
+            "id":"44206da5-b2a2-45f9-9421-d2d611916d24",
+            "generatedDate":curDate,
+            "useCaseId":"EOMCashFlowAnalysis_UC4",
+            "insightId":"EOMCashFlowAnalysis",
+            "presentedDate":curDate,
             "teaserBlocks":[
                 {
+                    "index":0,
                     "blockId":"date",
                     "type":"date-box",
-                    "date":"2017-04-20"
+                    "date":curDate.getDate()+" "+monthNames[curDate.getMonth()]+" "+curDate.getFullYear()
                 },
                 {
+                    "text":"סיכום פעילות חודשי בחשבונך",
                     "blockId":"title",
-                    "type":"txt",
-                    "text":"הפקדה מהרשויות"
+                    "type":"text",
+                    "index":1
                 },
                 {
+                    "text":"הנה כל הפרטים על הפעילות בחשבונך בחודש "+lastMonthDate,
                     "blockId":"teaser-text",
-                    "type":"txt",
-                    "text":"הופקדו בחשבונך <span class='perso-amount' role='text' aria-label='₪2,014.00'><span class='perso-minus-sign'></span><span class='perso-currency'>₪</span><span class='perso-int-num'>2,014</span><span class='perso-decimals-dot'>.</span><span class='perso-decimals'>00</span></span> מהרשויות"
+                    "type":"text",
+                    "index":2
                 },
                 {
-                    "series":[
-                        [
-                            {
-                                "label":"<tspan class='perso-amount' role='text' aria-label='₪17,656.72'><tspan class='perso-minus-sign'></tspan><tspan class='perso-currency'>₪</tspan><tspan class='perso-int-num'>17,656</tspan><tspan class='perso-decimals-dot'>.</tspan><tspan class='perso-decimals'>72</tspan></tspan>",
-                                "value":17656.72
-                            },
-                            {
-                                "label":"<tspan class='perso-amount' role='text' aria-label='₪2,014.00'><tspan class='perso-minus-sign'></tspan><tspan class='perso-currency'>₪</tspan><tspan class='perso-int-num'>2,014</tspan><tspan class='perso-decimals-dot'>.</tspan><tspan class='perso-decimals'>00</tspan></tspan>",
-                                "value":2014
-                            },
-                            {
-                                "label":"<tspan class='perso-amount' role='text' aria-label='₪15,680.71'><tspan class='perso-minus-sign'></tspan><tspan class='perso-currency'>₪</tspan><tspan class='perso-int-num'>15,680</tspan><tspan class='perso-decimals-dot'>.</tspan><tspan class='perso-decimals'>71</tspan></tspan>",
-                                "value":15680.71
-                            },
-                            {
-                                "label":"<tspan class='perso-amount' role='text' aria-label='₪2,014.00'><tspan class='perso-minus-sign'></tspan><tspan class='perso-currency'>₪</tspan><tspan class='perso-int-num'>2,014</tspan><tspan class='perso-decimals-dot'>.</tspan><tspan class='perso-decimals'>00</tspan></tspan>",
-                                "value":2014
-                            }
-                        ]
-                    ],
+                    "series":sortByMonth.map(function(month){return [{value:month.activities.filter(function(activity){return activity.type==="income";}).map(function(activity){return +activity.amount;}).reduce(function(a, b){return a + b;}, 0)},{value:month.activities.filter(function(activity){return activity.type==="outcome";}).map(function(activity){return +activity.amount;}).reduce(function(a, b){return a + b;}, 0)}];}),
                     "blockId":"chart",
                     "seriesLabels":[
-                        ""
+                        "In",
+                        "Out"
                     ],
-                    "categories":[
-                        "27 פבר",
-                        "27 מרץ",
-                        "30 מרץ",
-                        "20 אפר"
-                    ],
+                    "categories":sortByMonth.map(function(month){return month.month;}),
                     "class":"teaser-body",
-                    "type":"pin-chart",
-                    "direction":"vertical"
+                    "type":"bar-chart",
+                    "direction":"horizontal",
+                    "index":3
                 }
             ],
-            "category2":"",
+            "category2":"Spending",
             "insightType":"STORY",
             "type":"inform",
-            "category3":"",
-            "text":"{{Amount confirmedTransaction.amount.positiveAmountAsObject format='###,###,###.00'}} הופקדו בחשבונתך מהרשויות",
-            "displayDate":"Today",
-            "selectedDate":"",
-            "highlighted":false,
-            "teaserTemplate":"pinChart",
-            "score":13,
-            "status":"unread",
-            "category1":""
-        });
+            "category3":"money_in",
+            "text":"הנה כל הפרטים על הפעילות בחשבונך בחודש {{Date lastMonthDate format=\"MMMM\"}}",
+            "displayDate":"Last Week",
+            "selectedDate":curDate,
+            "highlighted":true,
+            "teaserTemplate":"horizontalBar",
+            "score":7,
+            "status":"read",
+            "category1":"in_out"
+
+        };
+
+
+
+        insights.push( insight);
         res.send(insights);
     }
     catch (err) {
         res.status(err.errorCode || 500).send(err);
     }
 }
+
+function transformArr(orig) {
+    var newArr = [],
+        types = {},
+        newItem, i, j, cur;
+    for (i = 0, j = orig.length; i < j; i++) {
+        cur = orig[i];
+        var month=new Date(cur.date).getMonth();
+        if (!(month in types)) {
+            types[month] = {month: monthNames[month], activities: []};
+            newArr.push(types[month]);
+        }
+        types[month].activities.push(cur);
+    }
+    return newArr;
+}
+
+
 
 
 module.exports = {
